@@ -34,34 +34,43 @@ export default function Editor() {
   });
 
   const onSubmit = async (data) => {
-    setError(null);
-    setStatus('creating');
-    setWorkflowId(null);
-    setRunId(null);
-    setLogs([]);
+  setError(null);
+  setStatus('creating');
+  setWorkflowId(null);
+  setRunId(null);
+  setLogs([]);
 
-    try {
-      // Create workflow
-      const createResult = await createWorkflow(data);
-      setWorkflowId(createResult.id);
-      setStatus('running');
+  try {
+    const createResult = await createWorkflow(data);
+    setWorkflowId(createResult.id);
+    setStatus('running');
 
-      // Run workflow
-      const runResult = await runWorkflow(createResult.id);
-      setRunId(runResult.run_id);
+    const runResult = await runWorkflow(createResult.id);
+    setRunId(runResult.run_id);
 
-      // Get logs
-      if (runResult.run_id) {
-        const logData = await getExecutionLogs(runResult.run_id);
-        setLogs(logData.history || []);
-      }
+    // Poll logs every 3 seconds until done
+    if (runResult.run_id) {
+      const interval = setInterval(async () => {
+        try {
+          const logData = await getExecutionLogs(runResult.run_id);
+          setLogs(logData.history || []);
 
-      setStatus(runResult.status === 'completed' ? 'completed' : 'failed');
-    } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'Something went wrong');
-      setStatus('failed');
+          // Check if done
+          const isDone = logData.history?.every(log => log.passed_criteria);
+          if (isDone || runResult.status !== 'running') {
+            clearInterval(interval);
+            setStatus('completed');
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      }, 3000); // poll every 3 seconds
     }
-  };
+  } catch (err) {
+    setError(err.message || 'Failed');
+    setStatus('failed');
+  }
+};
 
   return (
     <div style={{

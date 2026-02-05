@@ -17,11 +17,6 @@ export const runWorkflow = async (workflowId) => {
   return response.data;
 };
 
-export const getExecutionLogs = async (runId) => {
-  const response = await api.get(`/executions/${runId}`);
-  return response.data;
-};
-
 export const getAllWorkflows = async () => {
   try {
     const response = await api.get('/workflows');
@@ -29,5 +24,27 @@ export const getAllWorkflows = async () => {
   } catch (error) {
     console.error('Failed to fetch workflows:', error);
     return [];
+  }
+};
+
+// List all past run IDs
+export const getAllExecutions = async () => {
+  try {
+    const response = await api.get('/executions');
+    return response.data.run_ids || [];
+  } catch (error) {
+    console.error('Failed to fetch executions:', error);
+    return [];
+  }
+};
+
+// Already have this – just make sure it's there
+export const getExecutionLogs = async (runId) => {
+  try {
+    const response = await api.get(`/executions/${runId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch logs:', error);
+    return { history: [] };
   }
 };
