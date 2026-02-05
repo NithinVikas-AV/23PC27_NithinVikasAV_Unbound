@@ -1,4 +1,6 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+
 from models import Workflow
 from storage import save_workflow, get_workflow, get_execution_history
 from workflow_engine import execute_workflow
@@ -20,6 +22,19 @@ if not UNBOUND_API_BASE:
     raise ValueError("UNBOUND_API_BASE is missing in .env file")
 
 app = FastAPI()
+
+# Add this CORS block right here
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",     # your frontend Vite port
+        "http://127.0.0.1:5173",
+        "*"                          # or use "*" for testing (less secure)
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],             # allow GET, POST, OPTIONS, etc.
+    allow_headers=["*"],
+)
 
 @app.post("/workflows")
 def create_workflow(workflow: Workflow):
