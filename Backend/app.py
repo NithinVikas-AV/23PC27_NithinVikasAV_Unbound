@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from models import Workflow
 from fastapi.middleware.cors import CORSMiddleware
-from storage import save_workflow, get_workflow, get_execution_history
+from storage import save_workflow, get_workflow, get_execution_history, workflows
 from workflow_engine import execute_workflow
 from uuid import uuid4
 from datetime import datetime
@@ -29,6 +29,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/workflows")
+def list_workflows():
+    return list(workflows.values())  # returns all saved workflows as a list
 
 @app.post("/workflows")
 def create_workflow(workflow: Workflow):
