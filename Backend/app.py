@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
-from models import Workflow
 from fastapi.middleware.cors import CORSMiddleware
-from storage import save_workflow, get_workflow, get_execution_history, workflows
+
+from models import Workflow
+from storage import save_workflow, get_workflow, get_execution_history, workflows  # ← added workflows here
 from workflow_engine import execute_workflow
 from uuid import uuid4
 from datetime import datetime
@@ -24,15 +25,15 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # frontend URL
+    allow_origins=[
+        "http://localhost:5173",     # your frontend Vite port
+        "http://127.0.0.1:5173",
+        "*"                          # or use "*" for testing (less secure)
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"],             # allow GET, POST, OPTIONS, etc.
     allow_headers=["*"],
 )
-
-@app.get("/workflows")
-def list_workflows():
-    return list(workflows.values())  # returns all saved workflows as a list
 
 @app.post("/workflows")
 def create_workflow(workflow: Workflow):
@@ -61,3 +62,8 @@ def run_workflow(workflow_id: str):
 def get_execution(run_id: str):
     history = get_execution_history(run_id)
     return {"history": history}
+
+# New endpoint: list all saved workflows
+@app.get("/workflows")
+def list_workflows():
+    return list(workflows.values())
