@@ -21,3 +21,13 @@ export const getExecutionLogs = async (runId) => {
   const response = await api.get(`/executions/${runId}`);
   return response.data;
 };
+
+export const getAllWorkflows = async () => {
+  try {
+    const response = await api.get('/workflows');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch workflows:', error);
+    return [];
+  }
+};
