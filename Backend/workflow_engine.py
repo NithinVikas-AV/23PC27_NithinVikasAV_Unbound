@@ -127,6 +127,6 @@ def execute_workflow(workflow, run_id: str) -> dict:
 
         # Extract relevant part for next step
         relevant_part = extract_relevant_content(output)
-        context += "\n\n" + relevant_part
-
+        context = relevant_part   
+        
     return {"status": "completed", "run_id": run_id}
