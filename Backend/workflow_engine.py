@@ -40,9 +40,26 @@ def extract_relevant_content(output: str) -> str:
     return output.strip()
 
 
+# Add this helper function right above check_criteria
+def llm_judge(output: str, criteria: str) -> bool:
+    judge_prompt = f"""
+You are a strict judge. Your task is to decide if the following output satisfies this criterion:
+Criterion: {criteria}
+
+Output:
+{output}
+
+Reply with only one word: YES or NO
+    """.strip()
+
+    judge_llm = get_llm("fireworks-ai/kimi-k2p5")  # cheaper model for judging
+    response = judge_llm.invoke(judge_prompt)
+    return "YES" in response.content.strip().upper()
+
+
 def check_criteria(output: str, criteria: str) -> bool:
     """
-    More robust criteria checking
+    More robust criteria checking - now with LLM judge fallback
     """
     criteria = criteria.strip().lower()
 
@@ -55,7 +72,7 @@ def check_criteria(output: str, criteria: str) -> bool:
         try:
             return bool(re.search(pattern, output, re.IGNORECASE | re.DOTALL))
         except re.error:
-            return False  # invalid regex → fail safely
+            return False
 
     elif criteria == "json":
         try:
@@ -65,11 +82,12 @@ def check_criteria(output: str, criteria: str) -> bool:
             return False
 
     elif criteria == "code":
-        # Very basic check: has def, class, import or { / [ blocks
         return any(kw in output.lower() for kw in ["def ", "class ", "import ", "{", "[", "return "])
 
-    # Default: treat as contains
-    return criteria in output.lower()
+    # New: LLM judge for natural language / complex criteria
+    # Also fallback for anything not recognized
+    else:
+        return llm_judge(output, criteria)
 
 
 def execute_workflow(workflow, run_id: str) -> dict:
